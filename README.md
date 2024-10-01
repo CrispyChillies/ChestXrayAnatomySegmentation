@@ -125,6 +125,35 @@ cxas -i {desired input directory or file} -o {desired output directory} -mode {"
 - "-s"/"--store_seg": "Wether to also store segmentation masks" [default = False] 
     
 </details>
+
+## Docker Usage
+
+```bash
+docker build -t cxas . 
+```
+
+### For Interactive Visualization of Segmentations with Streamlit:
+
+Run the following command to start the interactive visualization:
+
+```bash
+docker run -p 8501:8501 cseibold/cxas:interactive
+```
+
+This will launch a Streamlit app, accessible via *localhost:8501*, where you can interactively visualize segmentations.
+
+### For Processing Files or Folders:
+
+To process a folder or file for segmentation, use this command:
+
+```bash
+docker run --rm -v /path/to/your/input/:/app/input -v /path/to/your/output:/app/output cseibold/cxas:cli -i /app/input -o /app/output --mode segment -g cpu -s
+```
+
+The *cseibold/cxas:cli* image behaves like the command line inputs for CXAS. The flags work as above.
+
+
+
 ## Foundation
 
 This work builds on the following papers:

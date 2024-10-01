@@ -9,6 +9,7 @@ from tqdm import tqdm
 from .file_io import FileLoader, FileSaver, get_folder_loader
 from .models import get_model
 from .extraction import Extractor
+from .helper import set_gpus, get_available_devices, find_max_overlap
 
 class CXAS(nn.Module):
     def __init__(self, 
@@ -25,8 +26,9 @@ class CXAS(nn.Module):
 
         """
         super(CXAS,self).__init__()
+        
+        self.gpus = set_gpus(gpus)
         self.model = get_model(model_name, gpus)
-        self.gpus = gpus
         self.fileloader = FileLoader(gpus)
         self.filesaver  = FileSaver()
         self.extractor = Extractor()
@@ -65,7 +67,7 @@ class CXAS(nn.Module):
         file_dict['file_size'] = [file_dict['file_size']]
         with torch.no_grad():
             predictions = self.model(file_dict)
-            
+        
         if do_store:
             self.store_prediction(predictions, output_directory, storage_type)
         return predictions
@@ -112,9 +114,11 @@ class CXAS(nn.Module):
             
         
         for file_dict in tqdm(dataloader):
-            if len(self.gpus)>0:
-                file_dict['data'] = file_dict['data'].to('cuda:{}'.format(self.gpus[0]))
-                
+            if (type(self.gpus) is list) and len(self.gpus) > 0:
+                file_dict['data'] = file_dict['data'].to('{}'.format(self.gpus[0]))
+            else:
+                file_dict['data'] = file_dict['data'].to(self.gpus)
+
             with torch.no_grad():
                 predictions = self.model(file_dict)
                 

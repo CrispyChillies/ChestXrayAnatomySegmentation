@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from .backbones import backbone
+from .backbones import Backbone
 from .unet_components import *
 
 class BackboneUNet(nn.Module):
@@ -16,7 +16,7 @@ class BackboneUNet(nn.Module):
         super(BackboneUNet, self).__init__()
         
         # Initializing backbone and UNet head
-        self.backbone = backbone(model_name)
+        self.backbone = Backbone(model_name)
         self.head = get_unet_head(model_name, classes)
         self.dropout = nn.Dropout(p=0)
         self.threshold = 0.5
