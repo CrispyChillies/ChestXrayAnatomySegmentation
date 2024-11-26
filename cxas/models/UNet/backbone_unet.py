@@ -4,6 +4,7 @@ import torch.nn.functional as F
 from .backbones import Backbone
 from .unet_components import *
 
+
 class BackboneUNet(nn.Module):
     def __init__(self, model_name: str, classes: int):
         """
@@ -14,7 +15,7 @@ class BackboneUNet(nn.Module):
             classes (int): Number of classes for segmentation.
         """
         super(BackboneUNet, self).__init__()
-        
+
         # Initializing backbone and UNet head
         self.backbone = Backbone(model_name)
         self.head = get_unet_head(model_name, classes)
@@ -34,8 +35,10 @@ class BackboneUNet(nn.Module):
         """
         out_dict = {**forward_dict, **orig_dict}
 
-        out_dict['segmentation_preds'] = (forward_dict['logits'].sigmoid() > self.threshold).bool()
-        
+        out_dict["segmentation_preds"] = (
+            forward_dict["logits"].sigmoid() > self.threshold
+        ).bool()
+
         return out_dict
 
     def forward(self, x):
@@ -48,7 +51,7 @@ class BackboneUNet(nn.Module):
         Returns:
             dict: Output dictionary with segmentation predictions.
         """
-        img = x['data']
+        img = x["data"]
         forward_dict = self._forward(img)
         out_dict = self.get_results(forward_dict, x)
         return out_dict
@@ -65,21 +68,22 @@ class BackboneUNet(nn.Module):
         """
         backbone_dict = self.backbone(x)
 
-        down1 = backbone_dict['feats_1_map']
-        down2 = backbone_dict['feats_2_map']
-        down3 = backbone_dict['feats_3_map']
-        down4 = backbone_dict['feats_4_map']
-        down5 = backbone_dict['feats_last_map']
-        
+        down1 = backbone_dict["feats_1_map"]
+        down2 = backbone_dict["feats_2_map"]
+        down3 = backbone_dict["feats_3_map"]
+        down4 = backbone_dict["feats_4_map"]
+        down5 = backbone_dict["feats_last_map"]
+
         up1 = self.dropout(self.head.up1(down5, down4))
         up2 = self.dropout(self.head.up2(up1, down3))
         up3 = self.dropout(self.head.up3(up2, down2))
         up4 = self.dropout(self.head.up4(up3, down1))
-        
-        up = F.interpolate(up4, x.shape[2:], mode='bilinear')
+
+        up = F.interpolate(up4, x.shape[2:], mode="bilinear")
         logits = self.head.out(up)
-        
-        return {'feats': up4, 'logits': logits}
+
+        return {"feats": up4, "logits": logits}
+
 
 def get_unet_head(network_name, classes, batch_size=1):
     """
@@ -93,15 +97,26 @@ def get_unet_head(network_name, classes, batch_size=1):
     Returns:
         nn.Module: UNet head module.
     """
-    if 'vit' in network_name:
-        return UNetHead(256, 128, classes, norm='batch' if batch_size > 1 else 'instance', constant=True)
-    elif 'resnet34' in network_name:
-        return UNetHead(512, 128, classes, norm='batch' if batch_size > 1 else 'instance')
+    if "vit" in network_name:
+        return UNetHead(
+            256,
+            128,
+            classes,
+            norm="batch" if batch_size > 1 else "instance",
+            constant=True,
+        )
+    elif "resnet34" in network_name:
+        return UNetHead(
+            512, 128, classes, norm="batch" if batch_size > 1 else "instance"
+        )
     else:
-        return UNetHead(2048, 128, classes, norm='batch' if batch_size > 1 else 'instance')
+        return UNetHead(
+            2048, 128, classes, norm="batch" if batch_size > 1 else "instance"
+        )
+
 
 class UNetHead(nn.Module):
-    def __init__(self, in_channels, ngf, num_classes, norm='batch', constant=False):
+    def __init__(self, in_channels, ngf, num_classes, norm="batch", constant=False):
         """
         Initializes the UNet head.
 

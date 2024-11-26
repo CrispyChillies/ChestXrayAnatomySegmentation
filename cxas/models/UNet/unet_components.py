@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 class DoubleConv(nn.Module):
     """Double Convolution Block: (convolution => [BN] => ReLU) * 2"""
 
@@ -23,7 +24,7 @@ class DoubleConv(nn.Module):
             nn.ReLU(inplace=True),
             nn.Conv2d(mid_channels, out_channels, kernel_size=3, padding=1),
             nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True)
+            nn.ReLU(inplace=True),
         )
 
     def forward(self, x):
@@ -37,6 +38,7 @@ class DoubleConv(nn.Module):
             torch.Tensor: Output tensor.
         """
         return self.double_conv(x)
+
 
 class Conv(nn.Module):
     """Convolution Block: (convolution => [BN] => ReLU)"""
@@ -68,6 +70,7 @@ class Conv(nn.Module):
         """
         return self.conv(x)
 
+
 class Down(nn.Module):
     """Downscaling with maxpool then double conv"""
 
@@ -81,8 +84,7 @@ class Down(nn.Module):
         """
         super().__init__()
         self.maxpool_conv = nn.Sequential(
-            nn.MaxPool2d(2),
-            DoubleConv(in_channels, out_channels)
+            nn.MaxPool2d(2), DoubleConv(in_channels, out_channels)
         )
 
     def forward(self, x):
@@ -96,6 +98,7 @@ class Down(nn.Module):
             torch.Tensor: Output tensor.
         """
         return self.maxpool_conv(x)
+
 
 class Up(nn.Module):
     """Upscaling then double conv"""
@@ -126,14 +129,17 @@ class Up(nn.Module):
         Returns:
             torch.Tensor: Output tensor.
         """
-        x1 = self.up(x1, x2.shape[2:], mode='bilinear')
+        x1 = self.up(x1, x2.shape[2:], mode="bilinear")
         x = torch.cat([x2, x1], dim=1)
         return self.conv(x)
+
 
 class UpInit(nn.Module):
     """Upscaling then double conv"""
 
-    def __init__(self, temp_channels, in_channels, out_channels, bilinear=True, hax=False):
+    def __init__(
+        self, temp_channels, in_channels, out_channels, bilinear=True, hax=False
+    ):
         """
         Initialize UpInit module.
 
@@ -150,7 +156,9 @@ class UpInit(nn.Module):
         self.up = F.interpolate
         self.conv1 = Conv(in_channels, temp_channels)
         if hax:
-            self.conv2 = DoubleConv(in_channels+temp_channels, out_channels, in_channels // 2)
+            self.conv2 = DoubleConv(
+                in_channels + temp_channels, out_channels, in_channels // 2
+            )
         else:
             self.conv2 = DoubleConv(in_channels, out_channels, in_channels // 2)
 
@@ -166,7 +174,7 @@ class UpInit(nn.Module):
             torch.Tensor: Output tensor.
         """
         x1 = self.conv1(x1)
-        x1 = self.up(x1, x2.shape[2:], mode='bilinear')
+        x1 = self.up(x1, x2.shape[2:], mode="bilinear")
         x = torch.cat([x2, x1], dim=1)
         return self.conv2(x)
 
@@ -195,4 +203,3 @@ class OutConv(nn.Module):
             torch.Tensor: Output tensor.
         """
         return self.conv(x)
-

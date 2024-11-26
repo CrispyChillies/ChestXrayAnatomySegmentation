@@ -2,6 +2,7 @@ import numpy as np
 from pycocotools import mask
 from copy import deepcopy
 
+
 def binary_mask_to_rle(binary_mask: np.array) -> dict:
     """
     Convert binary mask to COCO RLE format.
@@ -13,9 +14,10 @@ def binary_mask_to_rle(binary_mask: np.array) -> dict:
         dict: COCO RLE encoded mask.
     """
     mask_encoded = mask.encode(np.asfortranarray(binary_mask.astype(np.uint8)))
-    mask_encoded['counts'] = mask_encoded['counts'].decode('utf-8')
+    mask_encoded["counts"] = mask_encoded["counts"].decode("utf-8")
     return mask_encoded
-                      
+
+
 def rle_to_binary_mask(rle_mask: dict) -> np.array:
     """
     Convert COCO RLE encoded mask to binary mask.
@@ -27,10 +29,11 @@ def rle_to_binary_mask(rle_mask: dict) -> np.array:
         np.array: Binary mask array.
     """
     rle_mask_copy = deepcopy(rle_mask)
-    rle_mask_copy['counts'] = rle_mask_copy['counts'].encode('utf-8')
+    rle_mask_copy["counts"] = rle_mask_copy["counts"].encode("utf-8")
     binary_mask = mask.decode(rle_mask_copy)
     return binary_mask
-  
+
+
 def mask_to_annotation(mask: np.array, base_ann_id: int = 1, img_id: int = 1) -> list:
     """
     Convert mask array to COCO annotation format.
@@ -50,16 +53,17 @@ def mask_to_annotation(mask: np.array, base_ann_id: int = 1, img_id: int = 1) ->
         binary_mask = mask[i]
         mask_encoded = binary_mask_to_rle(binary_mask)
         annotation = {
-            'id': base_ann_id + i,
-            'image_id': img_id,
-            'category_id': i,
-            'segmentation': mask_encoded,
-            'area': int(np.sum(binary_mask)),
-            'bbox': toBox(mask_encoded).tolist(),
-            'iscrowd': 0  # Set to 1 if the mask represents a crowd region
+            "id": base_ann_id + i,
+            "image_id": img_id,
+            "category_id": i,
+            "segmentation": mask_encoded,
+            "area": int(np.sum(binary_mask)),
+            "bbox": toBox(mask_encoded).tolist(),
+            "iscrowd": 0,  # Set to 1 if the mask represents a crowd region
         }
         annotations.append(annotation)
     return annotations
+
 
 def toBox(binary_mask: np.array) -> list:
     """

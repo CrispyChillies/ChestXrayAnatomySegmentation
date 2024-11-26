@@ -20,6 +20,7 @@ from pathlib import Path
 
 this_directory = Path(__file__).parent
 
+
 class FolderDataset(Dataset):
     """
     Dataset class to load images from a folder.
@@ -90,7 +91,6 @@ class FolderDataset(Dataset):
         return len(self.files)
 
 
-
 def get_folder_loader(
     path: str, gpus: str, batch_size: int
 ) -> torch.utils.data.DataLoader:
@@ -114,6 +114,7 @@ def get_folder_loader(
         collate_fn=dataset.collate_fn,
     )
     return loader
+
 
 class FileLoader:
     """

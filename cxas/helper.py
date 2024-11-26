@@ -1,12 +1,13 @@
 import torch
 from typing import List, Union
 
+
 def get_available_devices() -> List[str]:
     """
     Get a list of available devices for PyTorch.
 
     Returns:
-        List[str]: A list of strings representing the available devices, 
+        List[str]: A list of strings representing the available devices,
         which may include 'cpu', 'mps', and 'cuda:X' for available CUDA devices.
     """
     devices = []
@@ -25,7 +26,10 @@ def get_available_devices() -> List[str]:
 
     return devices
 
-def find_max_overlap(input_string: str, string_list: List[str]) -> Union[int, List[int]]:
+
+def find_max_overlap(
+    input_string: str, string_list: List[str]
+) -> Union[int, List[int]]:
     """
     Find the index of the string with the maximum overlap with the input string.
 
@@ -34,9 +38,10 @@ def find_max_overlap(input_string: str, string_list: List[str]) -> Union[int, Li
         string_list (List[str]): A list of strings to compare with.
 
     Returns:
-        Union[int, List[int]]: The index of the string with the maximum overlap and 
+        Union[int, List[int]]: The index of the string with the maximum overlap and
         a list of overlap counts for debugging purposes.
     """
+
     def overlap_count(s1: str, s2: str) -> int:
         """Helper function to count the number of overlapping characters between two strings."""
         return len(set(s1) & set(s2))
@@ -46,20 +51,21 @@ def find_max_overlap(input_string: str, string_list: List[str]) -> Union[int, Li
 
     return argmax_index, overlap_counts
 
+
 def set_gpus(user_input: str) -> Union[str, List[str]]:
     """
     Map user input to the best fitting available GPUs.
 
     Args:
-        user_input (str): A string representing user input which can be a 
+        user_input (str): A string representing user input which can be a
                           device name, numeric index, or a comma-separated list.
 
     Returns:
-        Union[str, List[str]]: A single device string if one device is mapped, 
+        Union[str, List[str]]: A single device string if one device is mapped,
                                 or a list of device strings if multiple devices are mapped.
     """
     available_devices = get_available_devices()
-    
+
     # Check for direct match first
     if user_input in available_devices:
         return user_input
@@ -72,7 +78,7 @@ def set_gpus(user_input: str) -> Union[str, List[str]]:
 
         for inp in inputs:
             inp = inp.strip()  # Strip any whitespace
-            
+
             # Handle numeric inputs like '0', '1', etc.
             if inp.isdigit():
                 index = int(inp)
@@ -81,7 +87,9 @@ def set_gpus(user_input: str) -> Union[str, List[str]]:
                     mapped_devices.append(f"cuda:{index}")
                 else:
                     # Fallback for invalid numbers, map to the closest device
-                    argmax_index, _ = find_max_overlap(f"cuda:{index}", available_devices)
+                    argmax_index, _ = find_max_overlap(
+                        f"cuda:{index}", available_devices
+                    )
                     mapped_devices.append(available_devices[argmax_index])
             else:
                 # Handle direct text like "cpu", "mps", "cuda:0"

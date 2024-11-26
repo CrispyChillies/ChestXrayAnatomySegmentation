@@ -20,14 +20,11 @@ def create_category_annotation(category_dict):
     category_list = []
 
     for key, value in category_dict.items():
-        category = {
-            "supercategory": key,
-            "id": value,
-            "name": key
-        }
+        category = {"supercategory": key, "id": value, "name": key}
         category_list.append(category)
 
     return category_list
+
 
 def get_coco_json_format():
     """
@@ -42,7 +39,7 @@ def get_coco_json_format():
         "licenses": [],
         "images": [{}],
         "categories": [{}],
-        "annotations": [{}]
+        "annotations": [{}],
     }
 
     return coco_format
