@@ -68,10 +68,10 @@ def set_gpus(user_input: str) -> Union[str, List[str]]:
 
     # Check for direct match first
     if user_input in available_devices:
-        return user_input
+        return [user_input]
 
     # Handle cases like '0', 'cuda:0', '0,1,2', etc.
-    if isinstance(user_input, str):
+    if isinstance(user_input, str) and (user_input != 'cpu'):
         # Split the user input by commas to handle multi-GPU selections like "0,1,2"
         inputs = user_input.split(",")
         mapped_devices = []
