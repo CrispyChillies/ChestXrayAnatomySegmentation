@@ -36,10 +36,11 @@ class CXAS(nn.Module):
     def process_file(
         self,
         filename: str,
-        do_store: bool = False,
+        do_store: bool = False,        
         output_directory: str = "./",
         create: bool = False,
         storage_type: str = "npy",
+        return_file: bool = False,
     ) -> np.array:
         """
         Create segmentation of image file, can store predictions in desired directory in desired format
@@ -70,6 +71,7 @@ class CXAS(nn.Module):
 
         if do_store:
             self.store_prediction(predictions, output_directory, storage_type)
+        
         return predictions
 
     def process_folder(
@@ -208,7 +210,7 @@ class CXAS(nn.Module):
         do_store: bool = False,
         output_directory: str = "./",
         storage_type: str = "npy",
-    ) -> dict:
+        ) -> dict:
         """
         Create segmentation of image file and extract features in relation to the segmentation. Can store predictions in desired output directory in desired format.
 
@@ -238,10 +240,12 @@ class CXAS(nn.Module):
             do_store=do_store,
             output_directory=output_directory,
             storage_type=storage_type,
+            return_file=True
         )
 
         feat_dict = self.extractor.extract(
             file=predictions["segmentation_preds"][0].cpu().bool().numpy(),
+            image=predictions['data'][0].mean(0,keepdim=True),
             method=feat_to_extract,
             draw=draw,
         )
@@ -267,7 +271,7 @@ class CXAS(nn.Module):
             ]
             pd.DataFrame(scores).to_csv(
                 os.path.join(
-                    output_directory, filename.split("/")[-1].split(".")[0] + ".csv"
+                    output_directory, filename.split("/")[-1][:-4] + ".csv"
                 )
             )
 
@@ -282,7 +286,7 @@ class CXAS(nn.Module):
         store_pred: bool = False,
         storage_type: str = "npy",
         batch_size: int = 1,
-    ) -> None:
+        ) -> None:
         """
         Create segmentation of image file and extract features in relation to the segmentation. Can store predictions in desired output directory in desired format.
 
@@ -335,7 +339,7 @@ class CXAS(nn.Module):
 
         for file_dict in tqdm(dataloader):
             if len(self.gpus) > 0:
-                file_dict["data"] = file_dict["data"].to("cuda:{}".format(self.gpus[0]))
+                file_dict["data"] = file_dict["data"].to(self.gpus[0])
 
             with torch.no_grad():
                 predictions = self.model(file_dict)
@@ -343,6 +347,7 @@ class CXAS(nn.Module):
             for i in range(len(predictions["segmentation_preds"])):
                 extractions = self.extractor.extract(
                     file=predictions["segmentation_preds"][i].cpu().bool().numpy(),
+                    image=predictions['data'][0].mean(0,keepdim=True),
                     method=feat_to_extract,
                     draw=False,
                 )
@@ -417,3 +422,107 @@ class CXAS(nn.Module):
 
         # Perform forward pass through the model and return the result
         return self.model(image_batch)
+
+    def register_file(
+        self,
+        filename: str,
+        output_directory: str = "./",
+        reference_path: str = None,
+        do_correction: bool = True,
+        save_mask: bool = False,
+        create: bool = False,
+    ):
+        """
+        Register a single image file using landmark-based affine transformation.
+
+        Parameters
+        ----------
+            filename: path of file to process, currently supported types [.dcm, .jpg, .png]
+            output_directory: desired path of output directory
+            reference_path: path to reference .npz file or image. If None, uses default.
+            do_correction: whether to perform orientation/color correction
+            save_mask: whether to save registered segmentation masks
+            create: whether to create the output directory
+
+        Returns
+        -------
+            result: RegistrationResult with registered_image, affine_matrix, metadata
+        """
+        from .registration import Registrator
+        from .registration.registrator import save_registration_result
+
+        assert os.path.isfile(filename)
+
+        if not create:
+            assert os.path.isdir(output_directory)
+        else:
+            os.makedirs(output_directory, exist_ok=True)
+
+        registrator = Registrator(
+            model=self,
+            reference_path=reference_path,
+            do_correction=do_correction
+        )
+
+        file_dict = self.fileloader.load_file(filename)
+        result = registrator.register_single(file_dict, save_mask=save_mask)
+        save_registration_result(result, output_directory, save_mask=save_mask)
+
+        return result
+
+    def register_folder(
+        self,
+        input_directory_name: str,
+        output_directory: str,
+        reference_path: str = None,
+        do_correction: bool = True,
+        save_mask: bool = False,
+        create: bool = False,
+        batch_size: int = 1,
+    ):
+        """
+        Register all images in a directory.
+
+        Parameters
+        ----------
+            input_directory_name: path of directory containing images
+            output_directory: desired path of output directory
+            reference_path: path to reference .npz file or image. If None, uses default.
+            do_correction: whether to perform orientation/color correction
+            save_mask: whether to save registered segmentation masks
+            create: whether to create the output directory
+            batch_size: batch size for processing (currently only 1 supported)
+
+        Returns
+        -------
+            results: list of RegistrationResult objects
+        """
+        from .registration import Registrator
+        from .registration.registrator import save_registration_result
+
+        assert os.path.isdir(input_directory_name)
+
+        if not create:
+            assert os.path.isdir(output_directory)
+        else:
+            os.makedirs(output_directory, exist_ok=True)
+
+        registrator = Registrator(
+            model=self,
+            reference_path=reference_path,
+            do_correction=do_correction
+        )
+
+        dataloader = get_folder_loader(
+            input_directory_name,
+            self.gpus,
+            batch_size=1,  # Registration currently supports batch_size=1
+        )
+
+        results = []
+        for file_dict in tqdm(dataloader):
+            result = registrator.register_single(file_dict, save_mask=save_mask)
+            save_registration_result(result, output_directory, save_mask=save_mask)
+            results.append(result)
+
+        return results

@@ -103,28 +103,92 @@ cxas -i {desired input directory or file} -o {desired output directory} -mode {"
 
 <details>
 <summary>Setting options</summary>
-    
+
 - "-i"/"--input" : Either path to file or to directory to be processed. [**required**]
-    
+
 - "-o"/"--output": Output directory for segmentation masks  [**required**]
-    
+
 - "--mode": Select whether to segment images or extract features. [default="segment"]
             choices=["segment", 'extract']
-    
+
 - "-f", "--feature": Select which features are supposed to be extracted.
                      choices = ["SCD", "CTR", "Spine-Center Distance","Cardio-Thoracic Ratio"]
-    
+
 - "-ot"/"--output_type": Designates the storage type of segmentations if they are stored. [default = 'png']
                           choices=["json", "npy", "npz", "jpg", "png", "dicom-seg"]
-    
+
 - "-g"/"--gpus": Select specific GPU/CPU to process the input. [default = "0"]
-    
+
 - "-m"/"--model": Select Model used for inference. [default="UNet_ResNet50_default"]
-                  choices=["UNet_ResNet50_default"]     
-    
-- "-s"/"--store_seg": "Wether to also store segmentation masks" [default = False] 
-    
+                  choices=["UNet_ResNet50_default"]
+
+- "-s"/"--store_seg": "Wether to also store segmentation masks" [default = False]
+
 </details>
+
+### Running Registration from terminal
+
+Register chest X-ray images using landmark-based affine registration. The registration uses T4 and T10 vertebrae as landmarks and includes automatic orientation/color correction.
+
+```
+cxas_register -i {input image or directory} -o {output directory}
+```
+
+<details>
+<summary>Setting options</summary>
+
+- "-i"/"--input" : Either path to file or to directory to be processed. [**required**]
+
+- "-o"/"--output": Output directory for registered images  [**required**]
+
+- "-r"/"--reference": Path to reference image, directory, or .npz file. Uses default reference if not specified. [default = None]
+
+- "-g"/"--gpus": Select specific GPU/CPU to process the input. [default = "0"]
+
+- "-m"/"--model": Select Model used for inference. [default="UNet_ResNet50_default"]
+                  choices=["UNet_ResNet50_default"]
+
+- "--no-correction": Skip automatic orientation/color correction. [default = False]
+
+- "--save-mask": Save the registered segmentation mask as .npy file. [default = False]
+
+- "--build-reference": Build a reference from input images instead of registering. [default = False]
+
+- "--reference-out": Output path for built reference .npz file. [default = "reference_features.npz"]
+
+</details>
+
+**Output files:**
+- `{name}_registered.png` - The registered image
+- `{name}_metadata.json` - Transformation metadata (rotation, scale, translation, landmarks)
+- `{name}_affine.txt` - 2x3 affine transformation matrix
+- `{name}_registered_mask.npy` - Registered segmentation mask (if `--save-mask` is used)
+
+**Building a custom reference:**
+```bash
+cxas_register --build-reference -i reference_images/ --reference-out my_reference.npz -g cpu
+```
+
+### Python API for Registration
+
+```python
+from cxas import CXAS
+from cxas.registration import Registrator
+from cxas.file_io import FileLoader
+
+# Initialize model and registrator
+model = CXAS(model_name="UNet_ResNet50_default", gpus="0")
+registrator = Registrator(model, reference_path=None, do_correction=True)
+
+# Register a single image
+file_dict = FileLoader().load_file("image.jpg")
+result = registrator.register_single(file_dict, save_mask=True)
+
+# Access results
+registered_image = result.registered_image  # (H, W, C) numpy array
+affine_matrix = result.affine_matrix        # 2x3 transformation matrix
+metadata = result.metadata                   # dict with transformation details
+```
 
 ## Docker Usage
 

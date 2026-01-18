@@ -3,6 +3,7 @@ import SimpleITK as sitk
 import numpy as np
 import os
 import json
+import glob
 import torch
 import torch.nn.functional as F
 from itertools import groupby
@@ -35,13 +36,11 @@ class FolderDataset(Dataset):
             gpus (str): GPU(s) to use for processing.
         """
         super(Dataset, self).__init__()
+        
         file_types = ["jpg", "png", "dcm"]
         self.fileloader = FileLoader("")
-        self.files = [
-            os.path.join(path, i)
-            for i in os.listdir(path)
-            if i.split(".")[-1].lower() in file_types
-        ]
+        self.files = [file for ext in file_types for file in glob.glob(os.path.join(path, f"**/*.{ext}"), recursive=True)]
+
 
     def collate_fn(self, batch):
         """
@@ -110,7 +109,7 @@ def get_folder_loader(
         dataset,
         batch_size=batch_size,
         shuffle=False,
-        num_workers=4,
+        num_workers=0,
         collate_fn=dataset.collate_fn,
     )
     return loader
@@ -190,7 +189,16 @@ class FileLoader:
             self.file_types.keys()
         ), f"filetype not supported: {file_path.split('.')[-1].lower()}"
 
-        return self.file_types[file_path.split(".")[-1].lower()](file_path)
+        try:
+            return self.file_types[file_path.split(".")[-1].lower()](file_path)
+        except:
+            print(f'couldn\'t load {file_path}')
+            return {
+            "data": torch.zeros(1,3,512,512),
+            "orig_data": torch.zeros(1,3,512,512),
+            "filename": file_path,
+            "file_size": -1,
+        }
 
     def load_image(self, image_path: str) -> dict:
         """

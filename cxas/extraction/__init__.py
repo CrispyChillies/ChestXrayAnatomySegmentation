@@ -6,6 +6,7 @@ from .spinecenter_distance import get_spine_center_distance
 from .perimeter import get_all_perimeters
 from .bounding_box import get_all_bounding_boxes
 from .convexity import get_all_convexities
+from .radiomics import get_radiomics
 import numpy as np
 
 
@@ -25,6 +26,7 @@ class Extractor:
             "centroid": get_centroids,
             "box": get_all_bounding_boxes,
             "convexity": get_all_convexities,
+            "radiomics": get_radiomics,
         }
 
     def extract(

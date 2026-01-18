@@ -94,7 +94,7 @@ def load_weights(model, model_name: str, map_location: str = "cuda:0"):
     out_path = os.path.join(store_path, "weights/{}".format(model_name + ".pth"))
     assert os.path.isfile(out_path)
 
-    checkpoint = torch.load(out_path, map_location=map_location)
+    checkpoint = torch.load(out_path, map_location=map_location, weights_only=False)
 
     if "module" in list(checkpoint["model"].keys())[0]:
         for i in list(checkpoint["model"].keys()):

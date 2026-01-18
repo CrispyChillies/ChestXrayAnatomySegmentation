@@ -7,7 +7,7 @@ long_description = (this_directory / "docs/shortREADME.rst").read_text()
 
 setup(
     name="cxas",
-    version="0.0.17",
+    version="0.0.18",
     description="Segmentation of 159 anatomical classes for Chest X-Rays.",
     long_description=long_description,
     long_description_content_type="text/x-rst",
@@ -21,8 +21,9 @@ setup(
         "cxas.models",
         "cxas.extraction",
         "cxas.models.UNet",
+        "cxas.registration",
     ],
-    package_data={"cxas": ["data/*.json"]},
+    package_data={"cxas": ["data/*.json", "data/*.npz"]},
     install_requires=[
         "cython",
         "torch",
@@ -54,5 +55,6 @@ setup(
         "bin/cxas",
         "bin/cxas_feat_extract",
         "bin/cxas_segment",
+        "bin/cxas_register",
     ],
 )
