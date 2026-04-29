@@ -130,6 +130,7 @@ class FileLoader:
         self.base_size = 512
         self.file_types = {
             "jpg": self.load_image,
+            "jpeg": self.load_image,
             "png": self.load_image,
             "dcm": self.load_dicom,
         }
