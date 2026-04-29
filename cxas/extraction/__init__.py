@@ -6,8 +6,12 @@ from .spinecenter_distance import get_spine_center_distance
 from .perimeter import get_all_perimeters
 from .bounding_box import get_all_bounding_boxes
 from .convexity import get_all_convexities
-from .radiomics import get_radiomics
 import numpy as np
+
+try:
+    from .radiomics import get_radiomics
+except Exception:
+    get_radiomics = None
 
 
 class Extractor:
@@ -26,8 +30,9 @@ class Extractor:
             "centroid": get_centroids,
             "box": get_all_bounding_boxes,
             "convexity": get_all_convexities,
-            "radiomics": get_radiomics,
         }
+        if get_radiomics is not None:
+            self.methods["radiomics"] = get_radiomics
 
     def extract(
         self, file: np.array, method: str, image: np.array = None, draw: bool = False

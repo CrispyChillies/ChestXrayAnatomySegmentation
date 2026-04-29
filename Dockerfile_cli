@@ -4,9 +4,10 @@ FROM python:3.9-slim
 # Set the working directory inside the container
 WORKDIR /app
 
-# Copy the necessary files into the container
-
-COPY ./weights/ /app/.cxas/weights
+# Copy the source tree and model weights into the container
+COPY . /app
+RUN mkdir -p /app/.cxas/weights && \
+    cp /app/cxas/weights/UNet_resnet50_default.pth /app/.cxas/weights/UNet_ResNet50_default.pth
 
 ENV CXAS_PATH=/app/
 
@@ -17,16 +18,15 @@ RUN apt-get update && \
     libjpeg-dev \
     zlib1g-dev \
     libpng-dev \
-    libgl1-mesa-glx \
+    libgl1 \
     libglib2.0-0 && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
-# If you're using conda and the environment file is cxas_requirements.yml
 RUN pip install --upgrade pip && \
     pip install setuptools wheel && \
-    pip install torch torchvision torchaudio && \
-    pip install cxas==0.0.15
+    pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu torch torchvision && \
+    pip install --no-cache-dir -e .
 
 # # Optional: if you want to provide a default entry point for your CLI tool
 ENTRYPOINT ["cxas"]

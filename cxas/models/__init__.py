@@ -1,9 +1,48 @@
 import gdown, os, torch
+from pathlib import Path
 from ..label_mapper import id2label_dict
 
 model_urls = {
     "UNet_ResNet50_default": "https://drive.google.com/file/d/1Y9zubvMzkYHoAqz-NvV6vniH5FKAF2iV/view?usp=drive_link"
 }
+
+local_weight_files = {
+    "UNet_ResNet50_default": "UNet_resnet50_default.pth",
+}
+
+
+def _get_store_path():
+    if "CXAS_PATH" in os.environ:
+        return os.path.join(os.environ["CXAS_PATH"], ".cxas")
+    return os.path.join(os.path.expanduser("~"), ".cxas")
+
+
+def _get_repo_weight_path(model_name: str) -> str:
+    repo_root = Path(__file__).resolve().parents[1]
+    weight_filename = local_weight_files.get(model_name, model_name + ".pth")
+    return str(repo_root / "weights" / weight_filename)
+
+
+def _get_cached_weight_path(model_name: str) -> str:
+    store_path = _get_store_path()
+    return os.path.join(store_path, "weights", model_name + ".pth")
+
+
+def _resolve_weight_path(model_name: str) -> str:
+    if "CXAS_MODEL_PATH" in os.environ:
+        env_path = os.environ["CXAS_MODEL_PATH"]
+        if os.path.isfile(env_path):
+            return env_path
+
+    repo_weight_path = _get_repo_weight_path(model_name)
+    if os.path.isfile(repo_weight_path):
+        return repo_weight_path
+
+    cached_weight_path = _get_cached_weight_path(model_name)
+    if os.path.isfile(cached_weight_path):
+        return cached_weight_path
+
+    return cached_weight_path
 
 
 def get_model(model_name, gpus=""):
@@ -62,12 +101,13 @@ def download_weights(model_name: str) -> None:
     Args:
         model_name (str): Name of the model.
     """
-    if "CXAS_PATH" in os.environ:
-        store_path = os.path.join(os.environ["CXAS_PATH"], ".cxas")
-    else:
-        store_path = os.path.join(os.environ["HOME"], ".cxas")
-    os.makedirs(os.path.join(store_path, "weights/"), exist_ok=True)
-    out_path = os.path.join(store_path, "weights/{}".format(model_name + ".pth"))
+    repo_weight_path = _get_repo_weight_path(model_name)
+    if os.path.isfile(repo_weight_path):
+        return
+
+    store_path = _get_store_path()
+    os.makedirs(os.path.join(store_path, "weights"), exist_ok=True)
+    out_path = _get_cached_weight_path(model_name)
     if os.path.isfile(out_path):
         return
     else:
@@ -87,12 +127,8 @@ def load_weights(model, model_name: str, map_location: str = "cuda:0"):
     Returns:
         torch.nn.Module: Model with loaded weights.
     """
-    if "CXAS_PATH" in os.environ:
-        store_path = os.path.join(os.environ["CXAS_PATH"], ".cxas")
-    else:
-        store_path = os.path.join(os.environ["HOME"], ".cxas")
-    out_path = os.path.join(store_path, "weights/{}".format(model_name + ".pth"))
-    assert os.path.isfile(out_path)
+    out_path = _resolve_weight_path(model_name)
+    assert os.path.isfile(out_path), f"Weight file not found for {model_name}: {out_path}"
 
     checkpoint = torch.load(out_path, map_location=map_location, weights_only=False)
 

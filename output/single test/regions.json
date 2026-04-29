@@ -1,0 +1,119 @@
+{
+  "image_path": "C:\\Users\\HP\\Coding\\ChestXRayAnatomySegmentation\\tests\\47c78742-4998-4878-aec4-37b11b1354ac.png",
+  "regions": [
+    {
+      "region_name": "right_upper_lung_zone",
+      "cxas_label": "right upper zone lung",
+      "present": true,
+      "bbox_xyxy": [
+        196,
+        122,
+        514,
+        366
+      ],
+      "area_pixels": 61292,
+      "area_ratio": 0.058452606201171875,
+      "mask_path": "C:\\Users\\HP\\Coding\\ChestXRayAnatomySegmentation\\output\\single test\\masks\\right_upper_lung_zone.png",
+      "color": [
+        255,
+        80,
+        80
+      ]
+    },
+    {
+      "region_name": "right_mid_lung_zone",
+      "cxas_label": "right mid zone lung",
+      "present": true,
+      "bbox_xyxy": [
+        158,
+        346,
+        556,
+        628
+      ],
+      "area_pixels": 96448,
+      "area_ratio": 0.09197998046875,
+      "mask_path": "C:\\Users\\HP\\Coding\\ChestXRayAnatomySegmentation\\output\\single test\\masks\\right_mid_lung_zone.png",
+      "color": [
+        255,
+        170,
+        80
+      ]
+    },
+    {
+      "region_name": "right_lower_lung_zone",
+      "cxas_label": "right lung base",
+      "present": true,
+      "bbox_xyxy": [
+        144,
+        614,
+        530,
+        858
+      ],
+      "area_pixels": 79860,
+      "area_ratio": 0.07616043090820312,
+      "mask_path": "C:\\Users\\HP\\Coding\\ChestXRayAnatomySegmentation\\output\\single test\\masks\\right_lower_lung_zone.png",
+      "color": [
+        255,
+        230,
+        80
+      ]
+    },
+    {
+      "region_name": "left_upper_lung_zone",
+      "cxas_label": "left upper zone lung",
+      "present": true,
+      "bbox_xyxy": [
+        510,
+        114,
+        802,
+        364
+      ],
+      "area_pixels": 57868,
+      "area_ratio": 0.055187225341796875,
+      "mask_path": "C:\\Users\\HP\\Coding\\ChestXRayAnatomySegmentation\\output\\single test\\masks\\left_upper_lung_zone.png",
+      "color": [
+        80,
+        160,
+        255
+      ]
+    },
+    {
+      "region_name": "left_mid_lung_zone",
+      "cxas_label": "left mid zone lung",
+      "present": true,
+      "bbox_xyxy": [
+        514,
+        358,
+        844,
+        626
+      ],
+      "area_pixels": 75784,
+      "area_ratio": 0.07227325439453125,
+      "mask_path": "C:\\Users\\HP\\Coding\\ChestXRayAnatomySegmentation\\output\\single test\\masks\\left_mid_lung_zone.png",
+      "color": [
+        80,
+        220,
+        255
+      ]
+    },
+    {
+      "region_name": "left_lower_lung_zone",
+      "cxas_label": "left lung base",
+      "present": true,
+      "bbox_xyxy": [
+        546,
+        606,
+        870,
+        842
+      ],
+      "area_pixels": 66604,
+      "area_ratio": 0.06351852416992188,
+      "mask_path": "C:\\Users\\HP\\Coding\\ChestXRayAnatomySegmentation\\output\\single test\\masks\\left_lower_lung_zone.png",
+      "color": [
+        120,
+        255,
+        160
+      ]
+    }
+  ]
+}

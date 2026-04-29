@@ -263,7 +263,43 @@ label_mapper = {
     },
 }
 
-colors = [cc.cm.glasbey_bw_minc_20(i) for i in range(len(id2label_dict.keys()))]
+def _normalize_color(color_value):
+    if isinstance(color_value, str):
+        color_value = color_value.lstrip("#")
+        if len(color_value) == 6:
+            color_value += "FF"
+        if len(color_value) != 8:
+            raise ValueError(f"Unsupported color format: {color_value}")
+        return tuple(int(color_value[i : i + 2], 16) / 255.0 for i in range(0, 8, 2))
+
+    if isinstance(color_value, (list, tuple)):
+        if len(color_value) == 3:
+            color_value = list(color_value) + [1.0]
+        elif len(color_value) != 4:
+            raise ValueError(f"Unsupported color format: {color_value}")
+
+        if any(component > 1 for component in color_value):
+            return tuple(float(component) / 255.0 for component in color_value)
+        return tuple(float(component) for component in color_value)
+
+    raise ValueError(f"Unsupported color format: {color_value}")
+
+
+def _get_label_colors(num_colors: int):
+    cmap = getattr(getattr(cc, "cm", None), "glasbey_bw_minc_20", None)
+    if callable(cmap):
+        return [cmap(i) for i in range(num_colors)]
+
+    palette = getattr(cc, "glasbey_bw_minc_20", None)
+    if palette:
+        return [_normalize_color(palette[i % len(palette)]) for i in range(num_colors)]
+
+    raise RuntimeError(
+        "colorcet does not expose 'glasbey_bw_minc_20' as a callable colormap or palette."
+    )
+
+
+colors = _get_label_colors(len(id2label_dict.keys()))
 colors_alpha = [[i[0], i[1], i[2], i[3] / 2] for i in colors]
 category_colors = {colors[i][:3]: i for i in range(len(colors))}
 category_ids = {id2label_dict[k]: int(k) for k in id2label_dict.keys()}

@@ -4,9 +4,10 @@ FROM python:3.9-slim
 # Set the working directory inside the container
 WORKDIR /app
 
-# Copy the Streamlit app and all necessary files to the container
-COPY ./weights/ /app/.cxas/weights
-COPY interactive_cxas_app.py /app/
+# Copy the source tree and model weights to the container
+COPY . /app
+RUN mkdir -p /app/.cxas/weights && \
+    cp /app/cxas/weights/UNet_resnet50_default.pth /app/.cxas/weights/UNet_ResNet50_default.pth
 
 # Set environment variables
 ENV CXAS_PATH=/app/
@@ -18,7 +19,7 @@ RUN apt-get update && \
     libjpeg-dev \
     zlib1g-dev \
     libpng-dev \
-    libgl1-mesa-glx \
+    libgl1 \
     libglib2.0-0 \
     ffmpeg \
     libsm6 \
@@ -28,8 +29,9 @@ RUN apt-get update && \
 # Install Python dependencies
 RUN pip install --upgrade pip && \
     pip install setuptools wheel && \
-    pip install torch torchvision torchaudio && \
-    pip install cxas==0.0.15 streamlit opencv-python-headless pillow numpy
+    pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu torch torchvision && \
+    pip install --no-cache-dir streamlit opencv-python-headless pillow numpy && \
+    pip install --no-cache-dir -e .
 
 # Expose the default port for Streamlit (8501)
 EXPOSE 8501

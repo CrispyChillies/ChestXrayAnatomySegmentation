@@ -11,8 +11,7 @@ os.makedirs("tmp", exist_ok=True)
 # Helper function to run the segmentation command
 def run_segmentation(input_image_path, output_folder, mode="segment", gpu="cpu"):
     command = f"cxas -i {input_image_path} -o {output_folder} --mode {mode} -g {gpu} -s"
-    subprocess.run(command, shell=True)
-    return output_folder
+    return subprocess.run(command, shell=True, capture_output=True, text=True)
 
 
 # Helper function to colorize and outline the binary mask
@@ -85,33 +84,48 @@ if uploaded_image is not None:
         if not st.session_state.segmentation_done:
             if st.button("Run Segmentation"):
                 with st.spinner("Running segmentation..."):
-                    run_segmentation(input_image_path, st.session_state.output_folder)
-                st.session_state.output_folder = os.path.join(
-                    "tmp/output", input_image_name
-                )
-                st.success(
-                    f"Segmentation completed. Masks saved in {st.session_state.output_folder}"
-                )
-
-                st.session_state.mask_files = [
-                    f
-                    for f in os.listdir(st.session_state.output_folder)
-                    if f.endswith(".png")
-                ]
-                st.session_state.segmentation_done = True
+                    result = run_segmentation(
+                        input_image_path, st.session_state.output_folder
+                    )
+                st.session_state.output_folder = os.path.join("tmp/output", input_image_name)
+                if result.returncode != 0:
+                    st.error("Segmentation failed.")
+                    if result.stderr:
+                        st.code(result.stderr)
+                    elif result.stdout:
+                        st.code(result.stdout)
+                elif not os.path.isdir(st.session_state.output_folder):
+                    st.error(
+                        f"Segmentation finished without creating output folder: {st.session_state.output_folder}"
+                    )
+                else:
+                    st.session_state.mask_files = [
+                        f
+                        for f in os.listdir(st.session_state.output_folder)
+                        if f.endswith(".png")
+                    ]
+                    if not st.session_state.mask_files:
+                        st.error("No PNG masks were produced.")
+                    else:
+                        st.success(
+                            f"Segmentation completed. Masks saved in {st.session_state.output_folder}"
+                        )
+                        st.session_state.segmentation_done = True
 
     else:
         input_image_name = os.path.splitext(uploaded_image.name)[0]
         st.session_state.input_image = Image.open(f"tmp/{uploaded_image.name}")
         st.session_state.output_folder = os.path.join("tmp/output", input_image_name)
-        st.success(
-            f"Segmentation completed. Masks saved in {st.session_state.output_folder}"
-        )
-
-        st.session_state.mask_files = [
-            f for f in os.listdir(st.session_state.output_folder) if f.endswith(".png")
-        ]
-        st.session_state.segmentation_done = True
+        if os.path.isdir(st.session_state.output_folder):
+            st.success(
+                f"Segmentation completed. Masks saved in {st.session_state.output_folder}"
+            )
+            st.session_state.mask_files = [
+                f for f in os.listdir(st.session_state.output_folder) if f.endswith(".png")
+            ]
+            st.session_state.segmentation_done = True
+        else:
+            st.warning("Cached output folder was not found. Run segmentation again.")
 
 
 # Display uploaded image

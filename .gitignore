@@ -4,3 +4,4 @@ __pycache__
 *egg-info
 *.tar.gz
 docs/build
+C:\Users\HP\Coding\ChestXRayAnatomySegmentation\cxas\weights\UNet_resnet50_default.pth

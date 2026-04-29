@@ -30,7 +30,7 @@ class CXAS(nn.Module):
         self.model = get_model(model_name, gpus)
         self.fileloader = FileLoader(gpus)
         self.filesaver = FileSaver()
-        self.extractor = Extractor()
+        self.extractor = None
         self.eval()
 
     def process_file(
@@ -57,6 +57,8 @@ class CXAS(nn.Module):
             prediction: model output dictionary containing [feats: network features , logits: unnormalized network logit scores, data: input data, segmentation_preds: thresholded multi-label segmentations]
         """
         assert os.path.isfile(filename)
+        if self.extractor is None:
+            self.extractor = Extractor()
 
         if not create:
             assert os.path.isdir(output_directory)
@@ -94,6 +96,8 @@ class CXAS(nn.Module):
             batch_size: batch size used for the forward passes of the model
         """
         assert os.path.isdir(input_directory_name)
+        if self.extractor is None:
+            self.extractor = Extractor()
         if not create:
             assert os.path.isdir(output_directory)
         else:
