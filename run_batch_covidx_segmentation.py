@@ -6,6 +6,7 @@ from pathlib import Path
 
 import numpy as np
 from PIL import Image, ImageDraw
+from tqdm import tqdm
 
 from cxas import CXAS
 from cxas.label_mapper import id2label_dict
@@ -147,7 +148,9 @@ def main() -> None:
 
     records = parse_covidx_manifest(args.image_list, args.data_dir, limit=args.limit)
     manifest = []
-    for record in records:
+    progress = tqdm(records, desc="Segmenting COVIDx", unit="image")
+    for record in progress:
+        progress.set_postfix(image=record.filename)
         metadata = process_single_image(model, Path(record.image_path), output_dir, label_index)
         metadata["image_id"] = record.image_id
         metadata["label"] = record.label
